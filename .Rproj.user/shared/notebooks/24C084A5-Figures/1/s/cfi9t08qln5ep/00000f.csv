@@ -1,0 +1,6 @@
+"0","msd %>% "
+"0","  ggplot(aes(x=Date, y=Snow_Depth)) + "
+"0","  geom_line() +"
+"0","  theme_bw(base_size = 16) +"
+"0","  labs(y = ""Mean Snow Depth (m)"")"
+"0",""

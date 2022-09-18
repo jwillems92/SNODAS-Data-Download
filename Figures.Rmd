@@ -1,0 +1,100 @@
+---
+title: "Untitled"
+author: "Josh Willems"
+date: '2022-09-15'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(tidyverse)
+library(lubridate)
+
+msd <- read_csv("MeanSnowDepth.csv")
+neon <- read_csv("NEON_snow.csv")
+```
+
+
+```{r}
+msd <- msd %>% 
+  mutate(Source = "SNODAS")
+
+neon <- neon %>% 
+  mutate(Date = as.Date(paste(Year, Month, Day, sep="/")),
+         Snow_Depth = (Stake1Depth + Stake2Depth)/2,
+         Source = "NEON",
+         Snow_Depth = Snow_Depth/100) %>% 
+  dplyr::select(Date, Snow_Depth, Source)
+  
+snowDF <- rbind(msd, neon)
+```
+
+```{r}
+msd %>% 
+  ggplot(aes(x=Date, y=Snow_Depth)) + 
+  geom_line() +
+  theme_bw(base_size = 16) +
+  labs(y = "Mean Snow Depth (m)")
+
+```
+
+```{r}
+snowDF %>% 
+  mutate(Year = year(Date)) %>% 
+  filter(Year > 2015) %>% 
+  ggplot(aes(x = Date, y = Snow_Depth, color = Source)) + 
+  geom_line(cex = 1)
+```
+
+```{r}
+msd %>% 
+  mutate(Year = year(Date),
+         Month = month(Date),
+         Winter = ifelse(Month < 6, 
+                         paste("Winter" , Year, sep = " "),
+                         paste("Winter", (Year + 1), sep = " ")
+         )) %>% 
+  dplyr::select(Winter, Date, Snow_Depth, Source) %>% 
+  filter(Snow_Depth >= 0.2) %>% 
+  group_by(Winter) %>% 
+  summarise(Heimal_Days = n())
+```
+
+
+
+
+```{r}
+siteSD <- read_csv("SiteSpecificSnowDepth.csv")
+
+siteSD <- siteSD %>% 
+  mutate(Date = mdy(Date),
+         Year = year(Date),
+         Month = month(Date),
+         Day = day(Date),
+         Winter = ifelse(Month < 6, 
+                         paste("Winter" , Year, sep = " "),
+                         paste("Winter", (Year + 1), sep = " "))) %>% 
+  select(Date, Winter, Site, Snow_Depth)
+         
+left_join(siteSD, msd, by = c("Date")) %>% 
+  mutate(Variance = Snow_Depth.x - Snow_Depth.y) %>%
+  filter(Variance != "NA") %>% 
+  filter(Variance < 2) %>% 
+  ggplot(aes(x=Date, y=Variance, color = Site)) +
+    geom_col(position = "dodge") +
+    theme_bw(base_size = 20)
+
+
+
+
+
+   
+```
+
+      
+         Winter = ifelse(Month < 6, 
+                         paste("Winter" , Year, sep = " "),
+                         paste("Winter", (Year + 1), sep = " ")))
